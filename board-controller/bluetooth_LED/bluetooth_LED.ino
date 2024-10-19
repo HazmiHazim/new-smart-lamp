@@ -1,7 +1,6 @@
-#include "BluetoothSerial.h"
-// Access Wifi Library & Asynchronous Web Server for ESP32
-#include <WiFi.h>
-#include <HTTPClient.h>
+#include <WiFi.h>               // Include the WiFi library
+#include <HTTPClient.h>         // Include the HTTPClient library
+#include <ArduinoJson.h>        // Include the ArduinoJson library
 
 // LED 1
 #define LED1_RED 15   // GPIO 15
@@ -38,17 +37,11 @@
 #define RESOLUTION 8
 
 // Setting Configuration for Network ESP32
-const char *ssid = "ESP32-SMART-LAMP";
-const char *password = "adikberadik97";
+const char *ssid = "MY_WIFI_SSID";
+const char *password = "MY_WIFI_PASSWORD";
 
 // Const url for api call
 const char *baseApiPath = "http://127.0.0.1:500/api";
-
-#if !defined(CONFIG_BT_ENABLED) || !defined(CONFIG_BLUEDROID_ENABLED)
-#error Bluetooth is not enabled! Please run `make menuconfig` to and enable it
-#endif
-
-BluetoothSerial SerialBT
 
 void setup() {
   // put your setup code here, to run once:
@@ -82,17 +75,43 @@ void setup() {
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
   // Check if wifi connection successful then do the HTTP request
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
 
-    String endpoint = serverName + "/get_lamps";
-    http.begin(serverPath.c_str());
+    String endpoint = "/retrieve_all_lamps/NjcxMzAwZGI5NDVhYjU1NjU0ZjQ4MGNj";
+    String apiCall = String(baseApiPath) + endpoint;
+    http.begin(apiCall.c_str());
 
     // Send HTTP GET request
-    int response = http.GET();
+    int httpResponseCode = http.GET();
+
+    if (httpResponseCode > 0) {
+      String payload = http.getString(); // Get the response payload
+      Serial.println("HTTP Response code: " + String(httpResponseCode));
+      Serial.println("Response payload: " + payload);
+
+      // Parse JSON
+      DynamicJsonDocument doc(1024); // Allocate memory for the JSON document
+      DeserializationError error = deserializeJson(doc, payload); // Parse JSON
+
+      // Check for errors
+      if (error) {
+        Serial.println("Failed to parse JSON: " + String(error.c_str()));
+        return;
+      }
+
+      // Access JSON fields
+      const char* value = doc["key"]; // Replace "key" with your JSON key
+      Serial.println("Value from JSON: " + String(value));
+    } 
+    else {
+      Serial.println("Error on HTTP request: " + String(httpResponseCode));
+    }
+    http.end(); // Close the connection
   }
+
+  delay(5000); // Delay of 5 seconds before repeating the loop
 }
 
 // Function for Connecting to Wi-Fi Network with SSID and Password
