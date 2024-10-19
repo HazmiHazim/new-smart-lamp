@@ -17,3 +17,4 @@ build/
 *.log
 *.ini
 .env
+assets/
