@@ -1,0 +1,6 @@
+# Path to log file
+log:
+  base: PATH_TO_LOG_FOLDER
+
+images:
+  base: PATH_TO_IMAGES_FOLDER
